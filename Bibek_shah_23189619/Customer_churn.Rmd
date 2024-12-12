@@ -1,0 +1,207 @@
+---
+title: "customer_churn"
+author: "Bibek Shah"
+date: "`r Sys.Date()`"
+output: html_document
+---
+#Importing libraries 
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(corrplot)
+```
+#Loading the dataset
+```{r}
+data <- read.csv("C:/Users/Public/Documents/sem_4_R/Dataset/OneDrive_2024-09-05/customer churn/Telecom_customer churn.csv")
+```
+#Data Overview
+```{r}
+#checking the structure of dataset
+str(data)
+```
+1.showing summary statistics
+```{r}
+summary(data)
+```
+```{r}
+head(data)
+```
+2.Viewing the dimension of dataset
+```{r}
+dim(data)
+```
+```{r}
+# Number of rows
+n_rows <- nrow(data)
+print(paste("Number of rows:", n_rows))
+
+# Number of columns
+n_cols <- ncol(data)
+print(paste("Number of columns:", n_cols))
+
+```
+3.Viewing column names of the dataset
+```{r}
+colnames(data)
+```
+4.Checking the data types of each column
+```{r}
+sapply(data, class)
+```
+#Data Manipulation
+1.Checking for missing values
+```{r}
+colSums(is.na(data))
+```
+#Data Cleaning
+2.Handling the missing values and converting categorical variables to factors
+```{r}
+data <- data %>% mutate_if(is.numeric, ~ ifelse(is.na(.), median(., na.rm = TRUE), .))
+data$churn <- as.factor(data$churn)
+colSums(is.na(data))
+```
+#Data Visualization
+1.Visualizing churn distribution
+```{r}
+library(ggplot2)
+# Visualize churn distribution
+ggplot(data, aes(x = churn)) + 
+  geom_bar() + 
+  labs(title = "Churn Distribution", x = "Churn", y = "Count")
+```
+2.Revenue vs Churn graph
+```{r}
+# Visualize revenue vs churn
+ggplot(data, aes(x = totrev, fill = churn)) + 
+  geom_histogram(bins = 30) + 
+  labs(title = "Total Revenue vs Churn", x = "Total Revenue", y = "Count")
+```
+
+3.Visualizing Churn rate by area
+```{r}
+# churn rate by area
+ggplot(data, aes(x = area, fill = churn)) +
+  geom_bar(position = "fill") +
+  labs(title = "Churn Rate by Area", x = "Area", y = "Proportion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+4.Visualizing Churn vs. Monthey Revenue
+```{r}
+# Churn vs Monthly Revenue
+ggplot(data, aes(x = totmrc_Mean, fill = churn)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Density Plot of Monthly Revenue by Churn", x = "Monthly Revenue", y = "Density") +
+  theme_minimal()
+```
+5.Visualizing Churn vs Mean Outgoing Usage(MOU)
+```{r}
+# Churn vs. Mean Outgoing Usage
+ggplot(data, aes(x = mou_Mean, y = churn, color = churn)) +
+  geom_jitter(alpha = 0.5) +
+  labs(title = "Churn vs. Mean Outgoing Usage", x = "Mean Outgoing Usage (MOU)", y = "Churn Status") +
+  theme_minimal()
+```
+
+# Correlation Matrix
+```{r}
+# Loading the required library for correlation plot
+install.packages("corrplot")
+library(corrplot)
+
+# Calculating correlation matrix
+cor_matrix <- cor(data %>% select_if(is.numeric))
+
+# Plotting the correlation matrix
+corrplot(cor_matrix, method = "circle", type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45, title = "Correlation Matrix")
+```
+1.Boxplot of Total Revenue by Churn
+```{r}
+library(ggplot2)
+ggplot(data, aes(x = churn, y = totrev)) +
+  geom_boxplot() +
+  labs(title = "Total Revenue by Churn Status", x = "Churn Status", y = "Total Revenue") +
+  theme_minimal()
+```
+2.Visualizing churn rate over time by month
+```{r}
+ggplot(data, aes(x = months, fill = churn)) +
+  geom_bar(position = "fill") +
+  labs(title = "Churn Rate Over Time", x = "Months", y = "Proportion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+```
+3.Pair plot for a selection of numerical features
+```{r}
+# Loading the required package for pair plots
+install.packages("GGally")
+library(GGally)
+
+# Pair plot for a selection of numerical features
+ggpairs(data %>% select(totrev, mou_Mean, totmrc_Mean, churn),
+        mapping = aes(color = churn)) +
+  labs(title = "Pairwise Comparison of Selected Features")
+```
+4.Stacked bar chart for churn by customer type
+```{r}
+ggplot(data, aes(x = marital, fill = churn)) +
+  geom_bar(position = "fill") +
+  labs(title = "Churn Rate by Marital Status", x = "Marital Status", y = "Proportion") +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal()
+```
+5.Histogram of Monthly Revenue
+```{r}
+# Histogram of Monthly Revenue
+ggplot(data, aes(x = totmrc_Mean, fill = churn)) +
+  geom_histogram(bins = 30, alpha = 0.7, position = "identity") +
+  labs(title = "Distribution of Monthly Revenue", x = "Monthly Revenue", y = "Count") +
+  theme_minimal()
+```
+6.Violin plot of data usage by churn status
+```{r}
+ggplot(data, aes(x = churn, y = datovr_Mean, fill = churn)) +
+  geom_violin(trim = FALSE) +
+  labs(title = "Data Usage Distribution by Churn Status", x = "Churn Status", y = "Data Over Usage Mean") +
+  theme_minimal()
+```
+7.Scatter plot for Total Revenue vs. Mean Outgoing Usage
+```{r}
+# Scatter plot for Total Revenue vs. Mean Outgoing Usage
+ggplot(data, aes(x = totrev, y = mou_Mean, color = churn)) +
+  geom_point(alpha = 0.6) +
+  labs(title = "Total Revenue vs. Mean Outgoing Usage", x = "Total Revenue", y = "Mean Outgoing Usage (MOU)") +
+  theme_minimal() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+8.Boxplot of Outgoing Calls by Churn
+```{r}
+ggplot(data, aes(x = churn, y = totcalls)) +
+  geom_boxplot() +
+  labs(title = "Outgoing Calls by Churn Status", x = "Churn Status", y = "Total Calls") +
+  theme_minimal()
+```
+9.Radar Chart of Feature Distributions
+```{r}
+# Load the required package for radar charts
+install.packages("fmsb")
+library(fmsb)
+
+# Prepare data for radar chart
+feature_data <- data %>%
+  group_by(churn) %>%
+  summarise(across(c(totmrc_Mean, mou_Mean, totrev, datovr_Mean), mean))
+
+# Normalize the data
+feature_data <- rbind(rep(200, 4), rep(0, 4), feature_data)  # Adjust limits as needed
+colnames(feature_data) <- c("totmrc_Mean", "mou_Mean", "totrev", "datovr_Mean")
+rownames(feature_data) <- c("Max", "Min", "Churned", "Not Churned")
+
+# Radar chart
+radarchart(feature_data, axistype = 1, pcol = c("red", "blue"), plwd = 2, plty = 1)
+```
+
+
+
